@@ -103,29 +103,6 @@
     }
   }
 
-  /* Strikethrough decoration on MVC */
-  h1 .mvc {
-    position: relative;
-    display: inline-block;
-  }
-
-  h1 .mvc::after {
-    content: '';
-    position: absolute;
-    left: -0.05em;
-    right: -0.05em;
-    top: 55%;
-    height: 0.08em;
-    background: #ff003c;
-    transform: rotate(-2deg);
-    animation: strikeIn 0.6s 1.2s both;
-  }
-
-  @keyframes strikeIn {
-    from { transform: scaleX(0) rotate(-2deg); transform-origin: left; }
-    to { transform: scaleX(1) rotate(-2deg); transform-origin: left; }
-  }
-
   /* Manifesto lines */
   .manifesto {
     display: flex;
@@ -223,7 +200,7 @@
   <div class="vignette"></div>
 
   <div class="container">
-    <h1>THICC<span class="mvc">MVC</span></h1>
+    <h1>THICCMVC</h1>
     <div class="manifesto">
       <span class="line">Fat model.</span>
       <span class="line">Fat controller.</span>
