@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ThiccMVC</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #080808;
+    color: #c4c4c4;
+    font-family: 'Courier New', 'Lucida Console', monospace;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* CRT scanline overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.15) 2px,
+      rgba(0, 0, 0, 0.15) 4px
+    );
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  /* Noise grain */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: -50%;
+    width: 200%;
+    height: 200%;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 99;
+    animation: grain 0.5s steps(1) infinite;
+  }
+
+  @keyframes grain {
+    0% { transform: translate(0, 0); }
+    25% { transform: translate(-5%, 5%); }
+    50% { transform: translate(5%, -5%); }
+    75% { transform: translate(-5%, -5%); }
+    100% { transform: translate(5%, 5%); }
+  }
+
+  .container {
+    position: relative;
+    z-index: 10;
+    padding: 2rem;
+    max-width: 90vw;
+  }
+
+  /* Main heading */
+  h1 {
+    font-size: clamp(4rem, 15vw, 10rem);
+    font-weight: 400;
+    letter-spacing: -0.04em;
+    line-height: 0.85;
+    color: #fff;
+    text-transform: uppercase;
+    position: relative;
+    margin-bottom: 3rem;
+    /* Glitch shadow */
+    text-shadow:
+      0.04em 0 0 rgba(255, 0, 60, 0.6),
+      -0.04em 0 0 rgba(0, 255, 200, 0.4);
+    animation: glitchText 4s infinite;
+  }
+
+  @keyframes glitchText {
+    0%, 92%, 100% {
+      text-shadow:
+        0.04em 0 0 rgba(255, 0, 60, 0.6),
+        -0.04em 0 0 rgba(0, 255, 200, 0.4);
+    }
+    93% {
+      text-shadow:
+        -0.06em 0.02em 0 rgba(255, 0, 60, 0.8),
+        0.06em -0.02em 0 rgba(0, 255, 200, 0.6);
+    }
+    94% {
+      text-shadow:
+        0.08em -0.01em 0 rgba(255, 0, 60, 0.9),
+        -0.03em 0.03em 0 rgba(0, 255, 200, 0.7);
+    }
+    95% {
+      text-shadow:
+        0.04em 0 0 rgba(255, 0, 60, 0.6),
+        -0.04em 0 0 rgba(0, 255, 200, 0.4);
+    }
+  }
+
+  /* Strikethrough decoration on MVC */
+  h1 .mvc {
+    position: relative;
+    display: inline-block;
+  }
+
+  h1 .mvc::after {
+    content: '';
+    position: absolute;
+    left: -0.05em;
+    right: -0.05em;
+    top: 55%;
+    height: 0.08em;
+    background: #ff003c;
+    transform: rotate(-2deg);
+    animation: strikeIn 0.6s 1.2s both;
+  }
+
+  @keyframes strikeIn {
+    from { transform: scaleX(0) rotate(-2deg); transform-origin: left; }
+    to { transform: scaleX(1) rotate(-2deg); transform-origin: left; }
+  }
+
+  /* Manifesto lines */
+  .manifesto {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15em;
+    font-size: clamp(0.85rem, 2.2vw, 1.15rem);
+    line-height: 1.7;
+    letter-spacing: 0.02em;
+  }
+
+  .line {
+    display: block;
+    opacity: 0;
+    animation: typeIn 0.3s forwards;
+    position: relative;
+    width: fit-content;
+  }
+
+  .line::before {
+    content: '>';
+    color: #444;
+    margin-right: 0.6em;
+  }
+
+  .line:nth-child(1) { animation-delay: 0.3s; }
+  .line:nth-child(2) { animation-delay: 0.6s; }
+  .line:nth-child(3) { animation-delay: 0.9s; }
+  .line:nth-child(4) { animation-delay: 1.2s; }
+
+  @keyframes typeIn {
+    from { opacity: 0; transform: translateX(-0.5em); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  /* The punchline */
+  .punchline {
+    display: block;
+    margin-top: 1.8rem;
+    font-size: clamp(1.2rem, 3.5vw, 1.8rem);
+    color: #ff003c;
+    opacity: 0;
+    animation: punchIn 0.5s 1.8s forwards;
+    position: relative;
+    width: fit-content;
+    letter-spacing: 0.04em;
+  }
+
+  @keyframes punchIn {
+    0% { opacity: 0; transform: translateY(0.3em); }
+    60% { opacity: 1; transform: translateY(-0.05em); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Blinking cursor after punchline */
+  .punchline::after {
+    content: '_';
+    animation: blink 1s step-end infinite;
+    margin-left: 0.1em;
+  }
+
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
+
+  /* Corner decoration — a big sloppy border */
+  .corner {
+    position: fixed;
+    width: 60px;
+    height: 60px;
+    border: 2px solid #1a1a1a;
+    z-index: 50;
+    pointer-events: none;
+  }
+  .corner--tl { top: 20px; left: 20px; border-right: none; border-bottom: none; }
+  .corner--tr { top: 20px; right: 20px; border-left: none; border-bottom: none; }
+  .corner--bl { bottom: 20px; left: 20px; border-right: none; border-top: none; }
+  .corner--br { bottom: 20px; right: 20px; border-left: none; border-top: none; }
+
+  /* Subtle vignette */
+  .vignette {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.7) 100%);
+    pointer-events: none;
+    z-index: 50;
+  }
+</style>
+</head>
+<body>
+  <div class="corner corner--tl"></div>
+  <div class="corner corner--tr"></div>
+  <div class="corner corner--bl"></div>
+  <div class="corner corner--br"></div>
+  <div class="vignette"></div>
+
+  <div class="container">
+    <h1>THICC<span class="mvc">MVC</span></h1>
+    <div class="manifesto">
+      <span class="line">Fat model.</span>
+      <span class="line">Fat controller.</span>
+      <span class="line">Fat view.</span>
+      <span class="line">300 lines of callbacks.</span>
+      <span class="punchline">Fuck it, whatever.</span>
+    </div>
+  </div>
+</body>
+</html>
