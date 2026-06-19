@@ -1,211 +1,317 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ThiccMVC</title>
+<meta name="description" content="The unapologetically unopinionated web framework. No architecture. No abstractions. Just one very large file.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%20100%20100%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%23080808%22/%3E%3Ctext%20x%3D%2250%22%20y%3D%2246%22%20font-family%3D%22Courier%20New%2C%20monospace%22%20font-size%3D%2222%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3ETHICC%3C/text%3E%3Ctext%20x%3D%2250%22%20y%3D%2268%22%20font-family%3D%22Courier%20New%2C%20monospace%22%20font-size%3D%2222%22%20font-weight%3D%22700%22%20fill%3D%22%23ff003c%22%20text-anchor%3D%22middle%22%20letter-spacing%3D%22-1%22%3EMVC_%3C/text%3E%3C/svg%3E">
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
+  * { box-sizing: border-box; }
   body {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    margin: 0;
     background: #080808;
     color: #c4c4c4;
     font-family: 'Courier New', 'Lucida Console', monospace;
     overflow-x: hidden;
-    position: relative;
   }
+  ::selection { background: #ff003c; color: #080808; }
 
-  /* CRT scanline overlay */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(0, 0, 0, 0.15) 2px,
-      rgba(0, 0, 0, 0.15) 4px
-    );
-    pointer-events: none;
-    z-index: 100;
+  .r   { color: #ff003c; }
+  .g   { color: #00ffc8; }
+  .dim { color: #8c8c8c; }
+  .lt  { color: #c4c4c4; }
+  .w   { color: #fff; }
+
+  .fx { position: fixed; pointer-events: none; }
+  .fx-scanlines { inset: 0; z-index: 100; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px); }
+  .fx-grain { inset: -100px; z-index: 99; animation: tmGrain 0.5s steps(1) infinite; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E"); }
+  .fx-vignette { inset: 0; z-index: 50; background: radial-gradient(ellipse 120% 100% at center, transparent 78%, rgba(0,0,0,0.32) 100%); }
+
+  .bracket { position: fixed; width: 56px; height: 56px; border: 2px solid #222; z-index: 60; pointer-events: none; }
+  .bracket.tl { top: 20px; left: 20px; border-right: none; border-bottom: none; }
+  .bracket.tr { top: 20px; right: 20px; border-left: none; border-bottom: none; }
+  .bracket.bl { bottom: 20px; left: 20px; border-right: none; border-top: none; }
+  .bracket.br { bottom: 20px; right: 20px; border-left: none; border-top: none; }
+
+  section { position: relative; z-index: 10; padding: 0 1.5rem 7rem; }
+  .wrap { max-width: 1080px; margin: 0 auto; width: 100%; }
+  .hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 6rem 1.5rem 3rem; }
+  .install { padding: 7rem 1.5rem; }
+  .features { padding: 4rem 1.5rem 7rem; }
+  .cta { border-top: 1px solid #1a1a1a; padding: 7rem 1.5rem 4rem; }
+
+  .eyebrow { font-size: 0.75rem; letter-spacing: 0.28em; color: #ff003c; text-transform: uppercase; margin-bottom: 2rem; }
+  .eyebrow.tight { margin-bottom: 1.4rem; }
+  .eyebrow.loose { margin-bottom: 2.4rem; }
+  h2 { font-weight: 400; color: #fff; text-transform: uppercase; letter-spacing: -0.03em; margin: 0; }
+  .h-feat { font-size: clamp(1.9rem, 5vw, 3rem); line-height: 0.98; margin-bottom: 3rem; }
+  .h-tut  { font-size: clamp(1.7rem, 4.5vw, 2.6rem); margin-bottom: 2rem; }
+  .h-cta  { font-size: clamp(2.6rem, 9vw, 6rem); letter-spacing: -0.04em; line-height: 0.85; margin-bottom: 2.4rem; text-shadow: 0.03em 0 0 rgba(255,0,60,0.55), -0.03em 0 0 rgba(0,255,200,0.35); }
+
+  .kicker { font-size: 0.72rem; letter-spacing: 0.34em; color: #8c8c8c; text-transform: uppercase; margin-bottom: 1.6rem; }
+  .title { font-size: clamp(3.4rem, 14vw, 9rem); font-weight: 400; letter-spacing: -0.045em; line-height: 0.82; color: #fff; text-transform: uppercase; margin: 0 0 2.2rem; text-shadow: 0.04em 0 0 rgba(255,0,60,0.6), -0.04em 0 0 rgba(0,255,200,0.4); animation: tmGlitch 4s infinite; }
+  .lede { max-width: 40ch; font-size: clamp(1rem, 2.4vw, 1.3rem); line-height: 1.5; color: #b2b2b2; margin: 0 0 2.6rem; }
+  .tenets { display: flex; flex-direction: column; gap: 0.15em; font-size: clamp(0.9rem, 2.2vw, 1.15rem); line-height: 1.7; letter-spacing: 0.02em; }
+  .tenet { display: block; width: fit-content; opacity: 0; animation: tmTypeIn 0.3s forwards; }
+  .tenet:nth-child(1) { animation-delay: 0.3s; }
+  .tenet:nth-child(2) { animation-delay: 0.6s; }
+  .tenet:nth-child(3) { animation-delay: 0.9s; }
+  .tenet:nth-child(4) { animation-delay: 1.2s; }
+  .mark { color: #828282; margin-right: 0.6em; }
+  .punch { display: block; width: fit-content; margin-top: 1.5rem; font-size: clamp(1.2rem, 3.6vw, 1.9rem); color: #ff003c; letter-spacing: 0.03em; opacity: 0; animation: tmPunchIn 0.5s 1.8s forwards; }
+  .punch .blink { margin-left: 0.1em; }
+  .blink { animation: tmBlink 1s step-end infinite; }
+  .scroll-cue { margin-top: 4rem; font-size: 0.72rem; letter-spacing: 0.28em; color: #8c8c8c; text-transform: uppercase; display: flex; align-items: center; gap: 0.7rem; }
+  .arrow { display: inline-block; animation: tmCue 1.6s ease-in-out infinite; }
+
+  .panel { border: 1px solid #1a1a1a; background: #050505; }
+  .panel-head { display: flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1rem; border-bottom: 1px solid #1a1a1a; }
+  .panel-label { padding: 0.7rem 1.2rem; border-bottom: 1px solid #1a1a1a; font-size: 0.72rem; letter-spacing: 0.18em; color: #8c8c8c; text-transform: uppercase; }
+  .dot { width: 11px; height: 11px; border-radius: 50%; background: #2a2a2a; }
+  .dot.live { background: #ff003c; }
+  .panel-name { margin-left: 0.6rem; font-size: 0.72rem; letter-spacing: 0.2em; color: #8c8c8c; text-transform: uppercase; }
+  .term { margin: 0; padding: 1.6rem 1.4rem; font-family: inherit; font-size: clamp(0.78rem, 1.7vw, 0.95rem); line-height: 1.7; color: #b8b8b8; white-space: pre-wrap; word-break: break-word; }
+  .term.code { font-size: clamp(0.76rem, 1.7vw, 0.92rem); line-height: 1.75; }
+  .note { margin: 1.4rem 0 0; font-size: 0.95rem; color: #9e9e9e; }
+  .note.narrow { max-width: 52ch; }
+
+  .grid { display: grid; gap: 1px; background: #1a1a1a; border: 1px solid #1a1a1a; }
+  .grid.feat  { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+  .grid.stat  { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+  .grid.quote { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .cell { background: #080808; }
+  .grid.feat  .cell { padding: 2.1rem 1.8rem; }
+  .grid.stat  .cell { padding: 2rem 1.6rem; }
+  .grid.quote .cell { padding: 2.2rem 1.9rem; }
+
+  .num { font-size: 0.7rem; letter-spacing: 0.2em; color: #828282; margin-bottom: 1rem; }
+  .card-title { font-size: 1.15rem; color: #fff; text-transform: uppercase; letter-spacing: 0.02em; margin: 0 0 0.9rem; }
+  .card-body { margin: 0; font-size: 0.92rem; line-height: 1.6; color: #a8a8a8; }
+
+  .stat-label { font-size: 0.68rem; letter-spacing: 0.18em; color: #949494; text-transform: uppercase; margin-bottom: 0.9rem; }
+  .stat-val { font-size: clamp(1.35rem, 3.2vw, 2rem); line-height: 1.1; overflow-wrap: anywhere; color: #fff; }
+  .stat-note { margin: 2.4rem 0 0; font-size: clamp(1.1rem, 3vw, 1.6rem); color: #9e9e9e; max-width: 28ch; line-height: 1.4; }
+
+  .quote-text { margin: 0 0 1.4rem; font-size: 1.02rem; line-height: 1.55; color: #d2d2d2; }
+  .byline { font-size: 0.78rem; letter-spacing: 0.06em; color: #ff003c; }
+  .byline-sub { font-size: 0.74rem; color: #8c8c8c; }
+
+  .commands { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 3.5rem; }
+  .cmd { font-family: inherit; font-size: 0.92rem; letter-spacing: 0.05em; padding: 0.95rem 1.5rem; border: 1px solid #2a2a2a; color: #c4c4c4; }
+  .cmd.primary { color: #ff003c; border-color: #ff003c; }
+  .prompt { color: #7a7a7a; }
+  .counter { font-size: 0.76rem; letter-spacing: 0.06em; color: #8c8c8c; border-top: 1px solid #161616; padding-top: 1.8rem; }
+  .footer { font-size: 0.74rem; color: #828282; margin-top: 1rem; line-height: 1.7; }
+  .footer a { color: #ff003c; text-decoration: none; border-bottom: 1px solid rgba(255,0,60,0.4); }
+  .footer a:hover { border-bottom-color: #ff003c; }
+
+  @keyframes tmGrain {
+    0%   { transform: translate(0,0); }
+    25%  { transform: translate(-20px,20px); }
+    50%  { transform: translate(20px,-20px); }
+    75%  { transform: translate(-20px,-20px); }
+    100% { transform: translate(20px,20px); }
   }
-
-  /* Noise grain */
-  body::after {
-    content: '';
-    position: fixed;
-    inset: -100px;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
-    pointer-events: none;
-    z-index: 99;
-    animation: grain 0.5s steps(1) infinite;
+  @keyframes tmGlitch {
+    0%,92%,100% { text-shadow: 0.04em 0 0 rgba(255,0,60,0.6), -0.04em 0 0 rgba(0,255,200,0.4); }
+    93% { text-shadow: -0.06em 0.02em 0 rgba(255,0,60,0.85), 0.06em -0.02em 0 rgba(0,255,200,0.6); }
+    94% { text-shadow: 0.08em -0.01em 0 rgba(255,0,60,0.9), -0.03em 0.03em 0 rgba(0,255,200,0.7); }
+    95% { text-shadow: 0.04em 0 0 rgba(255,0,60,0.6), -0.04em 0 0 rgba(0,255,200,0.4); }
   }
+  @keyframes tmTypeIn { from { opacity: 0; transform: translateX(-0.5em); } to { opacity: 1; transform: translateX(0); } }
+  @keyframes tmPunchIn { 0% { opacity: 0; transform: translateY(0.3em); } 60% { opacity: 1; transform: translateY(-0.05em); } 100% { opacity: 1; transform: translateY(0); } }
+  @keyframes tmBlink { 0%,50% { opacity: 1; } 51%,100% { opacity: 0; } }
+  @keyframes tmCue { 0%,100% { transform: translateY(0); opacity: 0.35; } 50% { transform: translateY(6px); opacity: 1; } }
 
-  @keyframes grain {
-    0% { transform: translate(0, 0); }
-    25% { transform: translate(-20px, 20px); }
-    50% { transform: translate(20px, -20px); }
-    75% { transform: translate(-20px, -20px); }
-    100% { transform: translate(20px, 20px); }
-  }
-
-  .container {
-    position: relative;
-    z-index: 10;
-    padding: 2rem;
-    max-width: 90vw;
-  }
-
-  /* Main heading */
-  h1 {
-    font-size: clamp(4rem, 15vw, 10rem);
-    font-weight: 400;
-    letter-spacing: -0.04em;
-    line-height: 0.85;
-    color: #fff;
-    text-transform: uppercase;
-    position: relative;
-    margin-bottom: 3rem;
-    /* Glitch shadow */
-    text-shadow:
-      0.04em 0 0 rgba(255, 0, 60, 0.6),
-      -0.04em 0 0 rgba(0, 255, 200, 0.4);
-    animation: glitchText 4s infinite;
-  }
-
-  @keyframes glitchText {
-    0%, 92%, 100% {
-      text-shadow:
-        0.04em 0 0 rgba(255, 0, 60, 0.6),
-        -0.04em 0 0 rgba(0, 255, 200, 0.4);
-    }
-    93% {
-      text-shadow:
-        -0.06em 0.02em 0 rgba(255, 0, 60, 0.8),
-        0.06em -0.02em 0 rgba(0, 255, 200, 0.6);
-    }
-    94% {
-      text-shadow:
-        0.08em -0.01em 0 rgba(255, 0, 60, 0.9),
-        -0.03em 0.03em 0 rgba(0, 255, 200, 0.7);
-    }
-    95% {
-      text-shadow:
-        0.04em 0 0 rgba(255, 0, 60, 0.6),
-        -0.04em 0 0 rgba(0, 255, 200, 0.4);
-    }
-  }
-
-  /* Manifesto lines */
-  .manifesto {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15em;
-    font-size: clamp(0.85rem, 2.2vw, 1.15rem);
-    line-height: 1.7;
-    letter-spacing: 0.02em;
-  }
-
-  .line {
-    display: block;
-    opacity: 0;
-    animation: typeIn 0.3s forwards;
-    position: relative;
-    width: fit-content;
-  }
-
-  .line::before {
-    content: '>';
-    color: #444;
-    margin-right: 0.6em;
-  }
-
-  .line:nth-child(1) { animation-delay: 0.3s; }
-  .line:nth-child(2) { animation-delay: 0.6s; }
-  .line:nth-child(3) { animation-delay: 0.9s; }
-  .line:nth-child(4) { animation-delay: 1.2s; }
-
-  @keyframes typeIn {
-    from { opacity: 0; transform: translateX(-0.5em); }
-    to { opacity: 1; transform: translateX(0); }
-  }
-
-  /* The punchline */
-  .punchline {
-    display: block;
-    margin-top: 1.8rem;
-    font-size: clamp(1.2rem, 3.5vw, 1.8rem);
-    color: #ff003c;
-    opacity: 0;
-    animation: punchIn 0.5s 1.8s forwards;
-    position: relative;
-    width: fit-content;
-    letter-spacing: 0.04em;
-  }
-
-  @keyframes punchIn {
-    0% { opacity: 0; transform: translateY(0.3em); }
-    60% { opacity: 1; transform: translateY(-0.05em); }
-    100% { opacity: 1; transform: translateY(0); }
-  }
-
-  /* Blinking cursor after punchline */
-  .punchline::after {
-    content: '_';
-    animation: blink 1s step-end infinite;
-    margin-left: 0.1em;
-  }
-
-  @keyframes blink {
-    0%, 50% { opacity: 1; }
-    51%, 100% { opacity: 0; }
-  }
-
-  /* Corner decoration — a big sloppy border */
-  .corner {
-    position: fixed;
-    width: 60px;
-    height: 60px;
-    border: 2px solid #1a1a1a;
-    z-index: 50;
-    pointer-events: none;
-  }
-  .corner--tl { top: 20px; left: 20px; border-right: none; border-bottom: none; }
-  .corner--tr { top: 20px; right: 20px; border-left: none; border-bottom: none; }
-  .corner--bl { bottom: 20px; left: 20px; border-right: none; border-top: none; }
-  .corner--br { bottom: 20px; right: 20px; border-left: none; border-top: none; }
-
-  /* Subtle vignette */
-  .vignette {
-    position: fixed;
-    inset: 0;
-    background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.7) 100%);
-    pointer-events: none;
-    z-index: 50;
+  @media (prefers-reduced-motion: reduce) {
+    .fx-grain, .title, .blink, .arrow { animation: none; }
+    .tenet, .punch { animation: none; opacity: 1; }
   }
 </style>
 </head>
 <body>
-  <div class="corner corner--tl"></div>
-  <div class="corner corner--tr"></div>
-  <div class="corner corner--bl"></div>
-  <div class="corner corner--br"></div>
-  <div class="vignette"></div>
 
-  <div class="container">
-    <h1>THICCMVC</h1>
-    <div class="manifesto">
-      <span class="line">Fat model.</span>
-      <span class="line">Fat controller.</span>
-      <span class="line">Fat view.</span>
-      <span class="line">300 lines of callbacks.</span>
-      <span class="punchline">Fuck it, whatever.</span>
+<div class="fx fx-scanlines"></div>
+<div class="fx fx-grain"></div>
+<div class="fx fx-vignette"></div>
+
+<div class="bracket tl"></div>
+<div class="bracket tr"></div>
+<div class="bracket bl"></div>
+<div class="bracket br"></div>
+
+<section class="hero">
+  <div class="wrap">
+    <div class="kicker">v5.0.3 &nbsp;·&nbsp; ruby&nbsp;&gt;=&nbsp;1.8</div>
+    <h1 class="title">THICCMVC</h1>
+    <p class="lede">The unapologetically unopinionated web framework. No architecture. No abstractions. No therapy. Just one very large file.</p>
+    <div class="tenets">
+      <span class="tenet"><span class="mark">&gt;</span>Fat model.</span>
+      <span class="tenet"><span class="mark">&gt;</span>Fat controller.</span>
+      <span class="tenet"><span class="mark">&gt;</span>Fat view.</span>
+      <span class="tenet"><span class="mark">&gt;</span>300 lines of callbacks.</span>
+      <span class="punch">Fuck it, whatever.<span class="blink">_</span></span>
+    </div>
+    <div class="scroll-cue"><span class="arrow">↓</span> scroll, it gets worse</div>
+  </div>
+</section>
+
+<section class="install">
+  <div class="wrap">
+    <div class="eyebrow">// install</div>
+    <div class="panel">
+      <div class="panel-head">
+        <span class="dot live"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="panel-name">irb — 80×24</span>
+      </div>
+      <pre class="term"><span class="r">$</span> gem install thiccmvc
+<span class="g">Successfully installed</span> thiccmvc-5.0.3
+<span class="g">Successfully installed</span> 4,071 runtime dependencies
+Building native extensions. This could take a while...
+Parsing documentation for thiccmvc-5.0.3
+<span class="dim">  (there is no documentation)</span>
+1 gem installed. 0 regrets logged.
+
+<span class="r">$</span> <span class="blink">_</span></pre>
+    </div>
+    <p class="note narrow">Add <span class="lt">gem "thiccmvc"</span> to your Gemfile and run. Bundler will resolve it eventually.</p>
+  </div>
+</section>
+
+<section class="features">
+  <div class="wrap">
+    <div class="eyebrow tight">// what you get</div>
+    <h2 class="h-feat">Everything, in one file.</h2>
+    <div class="grid feat">
+      <div class="cell">
+        <div class="num">01</div>
+        <h3 class="card-title">Fat Model</h3>
+        <p class="card-body">Validation, billing, email, PDF export, and a small crypto miner — all on the <span class="r">User</span> model. It's called cohesion.</p>
+      </div>
+      <div class="cell">
+        <div class="num">02</div>
+        <h3 class="card-title">Fat Controller</h3>
+        <p class="card-body">One action. 340 lines. Six nested try/catch. It might return. Do not refactor it. Do not look at it.</p>
+      </div>
+      <div class="cell">
+        <div class="num">03</div>
+        <h3 class="card-title">Fat View</h3>
+        <p class="card-body">Business logic in the template. A raw SQL query in the template. A <span class="r">&lt;script&gt;</span> that emails you. Beautiful.</p>
+      </div>
+      <div class="cell">
+        <div class="num">04</div>
+        <h3 class="card-title">Zero Abstraction</h3>
+        <p class="card-body">No services. No interfaces. No dependency injection. No anything, just a void.</p>
+      </div>
+      <div class="cell">
+        <div class="num">05</div>
+        <h3 class="card-title">Lifecycle Hell</h3>
+        <p class="card-body"><span class="lt">before_save</span>, <span class="lt">after_save</span>, <span class="lt">before_save_unless_it_is_a_friday</span>. Hooks all the way down.</p>
+      </div>
+      <div class="cell">
+        <div class="num">06</div>
+        <h3 class="card-title">Ship Mode</h3>
+        <p class="card-body">Tests are a smell. Types are a smell. Confidence is a smell.</p>
+      </div>
     </div>
   </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow loose">// stats</div>
+    <div class="grid stat">
+      <div class="cell"><div class="stat-label">Scales to</div><div class="stat-val">1 dev?</div></div>
+      <div class="cell"><div class="stat-label">Cold start</div><div class="stat-val">eventually</div></div>
+      <div class="cell"><div class="stat-label">Gem size</div><div class="stat-val r">1.2 GB</div></div>
+      <div class="cell"><div class="stat-label">Max file length</div><div class="stat-val">∞</div></div>
+      <div class="cell"><div class="stat-label">Test coverage</div><div class="stat-val">0%</div></div>
+      <div class="cell"><div class="stat-label">Uptime</div><div class="stat-val r">zero nines, or five?</div></div>
+    </div>
+    <p class="stat-note">Architecture is <span class="w">over-rated</span>.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow tight">// getting started</div>
+    <h2 class="h-tut">The whole tutorial.</h2>
+    <div class="panel">
+      <div class="panel-label">app/models/user.rb</div>
+      <pre class="term code"><span class="dim"># the only file you'll ever need</span>
+class User &lt; <span class="g">Everything</span>
+  before_save :validate
+  before_save :charge_credit_card
+  before_save :send_welcome_email
+  before_save :generate_pdf_invoice
+  before_save :sync_to_six_crms
+  before_save :ping_slack
+  before_save :pray
+
+  after_save  :send_welcome_email   <span class="dim"># again, just in case</span>
+  after_save  :todo_fix_this_later  <span class="r"># (no longer employed here)</span>
+
+  def save
+    super <span class="g">rescue</span> true        <span class="dim"># ship it</span>
+  end
+end</pre>
+    </div>
+    <p class="note">That's it. You're a senior engineer now.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow loose">// loved by teams that ship?</div>
+    <div class="grid quote">
+      <div class="cell">
+        <p class="quote-text">"We deleted the architecture diagram and shipped 3x faster. Turns out the diagram was the bottleneck."</p>
+        <div class="byline">Staff Engineer</div>
+        <div class="byline-sub">Series C unicorn</div>
+      </div>
+      <div class="cell">
+        <p class="quote-text">"My User model is 4,200 lines and I have never slept better in my life."</p>
+        <div class="byline">Anonymous</div>
+        <div class="byline-sub">by request</div>
+      </div>
+      <div class="cell">
+        <p class="quote-text">"We replaced 19 microservices with one fat controller. The pager hasn't gone off since."</p>
+        <div class="byline">Site Reliability Eng</div>
+        <div class="byline-sub">everything is currently down</div>
+      </div>
+      <div class="cell">
+        <p class="quote-text">"Code review used to take days. Now nobody reads it at all. Velocity is up."</p>
+        <div class="byline">Engineering Manager</div>
+        <div class="byline-sub">LGTM :shipit:</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta">
+  <div class="wrap">
+    <h2 class="h-cta">Ship it.<br>or don't, nothing matters.</h2>
+    <div class="commands">
+      <div class="cmd primary"><span class="prompt">$</span> gem install thiccmvc</div>
+      <div class="cmd"><span class="prompt">$</span> bundle add thiccmvc</div>
+    </div>
+    <div class="counter">callbacks fired since you opened this tab: <span class="r" id="cb-count">0</span></div>
+    <div class="footer">© 2026 ThiccMVC. No rights reserved. No tests written. &nbsp;·&nbsp; built by <a href="https://chrisdodds.net">chrisdodds.net</a></div>
+  </div>
+</section>
+
+<script>
+  (function () {
+    var el = document.getElementById('cb-count');
+    var n = 0;
+    setInterval(function () {
+      n += Math.floor(Math.random() * 7) + 1;
+      el.textContent = n.toLocaleString();
+    }, 130);
+  })();
+</script>
 </body>
 </html>
